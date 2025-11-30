@@ -13,15 +13,31 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!process.env.OPENAI_API_KEY) {
+    // 環境変数の詳細なチェック
+    const apiKey = process.env.OPENAI_API_KEY;
+    console.log('Environment check:', {
+      hasKey: !!apiKey,
+      keyLength: apiKey?.length,
+      keyPrefix: apiKey?.substring(0, 7),
+      allEnvKeys: Object.keys(process.env).filter(k => k.includes('OPENAI'))
+    });
+
+    if (!apiKey || apiKey.trim() === '') {
       return NextResponse.json(
-        { error: 'OpenAI APIキーが設定されていません。.envファイルにOPENAI_API_KEYを設定してください。' },
+        {
+          error: 'OpenAI APIキーが設定されていません。Vercelの環境変数設定を確認してください。',
+          debug: {
+            hasKey: !!apiKey,
+            isEmpty: apiKey === '',
+            envKeys: Object.keys(process.env).filter(k => k.includes('OPENAI'))
+          }
+        },
         { status: 500 }
       );
     }
 
     const openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
+      apiKey: apiKey,
     });
 
     const companyInfo = JSON.stringify(companyData, null, 2);
